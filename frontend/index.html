@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Escola - Alunos</title>
+</head>
+<body>
+  <header>
+    <h1>Lista de Alunos</h1>
+    <input id="search" placeholder="Pesquisar por nome" />
+    <select id="status"><option value="">Todos</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+    <button id="reload">Filtrar</button>
+  </header>
+  <main>
+    <ul id="lista"></ul>
+  </main>
+  <script>
+    async function load(){
+      const search = document.getElementById('search').value
+      const status = document.getElementById('status').value
+      const q = new URLSearchParams()
+      if(search) q.set('search', search)
+      if(status) q.set('status', status)
+      const res = await fetch('/api/alunos?'+q.toString())
+      const data = await res.json()
+      const ul = document.getElementById('lista')
+      ul.innerHTML = ''
+      data.forEach(a=>{
+        const li = document.createElement('li')
+        li.textContent = `${a.id} - ${a.nome} (${a.status})`
+        ul.appendChild(li)
+      })
+    }
+    document.getElementById('reload').addEventListener('click', load)
+    load()
+  </script>
+</body>
+</html>

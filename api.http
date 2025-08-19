@@ -1,0 +1,36 @@
+### Health
+GET http://127.0.0.1:8000/health
+
+### List turmas
+GET http://127.0.0.1:8000/turmas
+
+### Create turma
+POST http://127.0.0.1:8000/turmas
+Content-Type: application/json
+
+{
+  "nome": "4D",
+  "capacidade": 10
+}
+
+### List alunos
+GET http://127.0.0.1:8000/alunos
+
+### Create aluno
+POST http://127.0.0.1:8000/alunos
+Content-Type: application/json
+
+{
+  "nome": "Teste User",
+  "data_nascimento": "2010-05-20",
+  "email": "teste@ex.com"
+}
+
+### Matricular
+POST http://127.0.0.1:8000/matriculas
+Content-Type: application/json
+
+{
+  "aluno_id": 1,
+  "turma_id": 1
+}
