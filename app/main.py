@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from typing import Optional, List
 from sqlmodel import select, text
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from .database import init_db, get_session
 from .models import Aluno, Turma
@@ -57,8 +57,8 @@ def get_alunos(
             max_dob = date(today.year - age_min, today.month, today.day)
             q = q.where(Aluno.data_nascimento <= max_dob)
         if age_max is not None:
-            min_dob = date(today.year - age_max - 1, today.month, today.day) + datetime.timedelta(days=1)
-            # simplificação: usar <=/>= aproximação
+            # data de nascimento mínima permitida para idade máxima (nascidos a partir desta data têm idade <= age_max)
+            min_dob = date(today.year - age_max, today.month, today.day)
             q = q.where(Aluno.data_nascimento >= min_dob)
         # ordenação segura
         if order in ("nome", "data_nascimento", "status"):
