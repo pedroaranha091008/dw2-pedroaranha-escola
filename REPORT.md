@@ -85,7 +85,39 @@ uvicorn app.main:app --reload
 
 Prompts do Copilot (exemplos)
 ----------------------------
-Inclua aqui 6 prompts usados durante desenvolvimento, com trechos aceitos/editados e justificativa (ex.: geração de models, seed script, validações, toasts, filtros). Preencher na versão final.
+Durante o desenvolvimento utilizei prompts para gerar trechos repetitivos e acelerar a implementação; abaixo 6 prompts reais (ajustados para o contexto) com o trecho aceito/editado e por quê:
+
+1) Gerar models SQLModel para Turma e Aluno
+	- Prompt: "Gerar models SQLModel para entidades Turma(id,nome,capacidade) e Aluno(id,nome,data_nascimento,email?,status,turma_id?) com relacionamentos"
+	- Trecho aceito/editado: classe `Turma` e `Aluno` em `app/models.py` (ajustei tipos e nomes de campos, e adicionei Relationship para facilitar consultas).
+	- Por quê: acelerou criação de models e evitou erros de mapeamento; adaptei validações e defaults manualmente.
+
+2) Criar endpoint básico FastAPI /alunos
+	- Prompt: "Escrever endpoint FastAPI GET/POST/PUT/DELETE para model Aluno usando SQLModel e sessão".
+	- Trecho aceito/editado: handlers em `app/main.py` (mantive a estrutura sugerida e acrescentei validações de idade e mensagens de erro claras).
+	- Por quê: forneceu esqueleto rápido; editei respostas e tratamento de HTTP codes.
+
+3) Script seed plausível
+	- Prompt: "Gerar um script seed que crie 20 nomes plausíveis e 3 turmas com capacidades diferentes usando SQLModel Session".
+	- Trecho aceito/editado: `seed.py` com lista de 20 nomes e lógica de distribuição entre turmas; ajustei anos de nascimento para manter faixas coerentes.
+	- Por quê: economizou tempo de criação de dados e permitiu foco nas validações.
+
+4) Validação de faixa etária (backend)
+	- Prompt: "Adicionar validação no endpoint POST /alunos para assegurar que aluno tenha pelo menos 5 anos, retornar HTTP 400 com mensagem clara".
+	- Trecho aceito/editado: ver `create_aluno` em `app/main.py` (insira a verificação de idade e raise HTTPException com detail amigável).
+	- Por quê: garante regras de negócio no servidor; mantive a mesma mensagem no cliente para consistência UX.
+
+5) Toasts acessíveis e animação
+	- Prompt: "Exemplo simples de toasts acessíveis em JS (role=alert, aria-live) com botão fechar e animação CSS".
+	- Trecho aceito/editado: implementação em `frontend/index.html` e estilos em `frontend/css/style.css` (adaptei classes e tempos de animação).
+	- Por quê: trouxe padrão acessível e rapidamente integrável, editei para combinar com o estilo do projeto.
+
+6) Filtros avançados + paginação
+	- Prompt: "Implementar filtros combináveis (search, turma_id, status, age_min, age_max) e opções de ordenação; retornar resultados paginados (limit/offset)".
+	- Trecho aceito/editado: backend `/alunos` em `app/main.py` (parâmetros age_min/age_max/order/limit/offset) e frontend query-building em `frontend/index.html`.
+	- Por quê: reduziu esforço ao lidar com query params e ordenação; refinei cálculo de datas para filtros por idade.
+
+Esses prompts aceleraram tarefas repetitivas; em todos os casos revisei e ajustei os trechos gerados para garantir segurança, mensagens de erro claras e integração com o restante do código.
 
 Limitações e melhorias futuras
 ----------------------------
