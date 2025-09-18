@@ -11,13 +11,15 @@
   <header>
     <h1>Lista de Alunos</h1>
     <div class="controls">
-      <input id="search" placeholder="Pesquisar por nome" aria-label="Pesquisar por nome" />
+  <input id="search" placeholder="Pesquisar por nome" aria-label="Pesquisar por nome" />
       <select id="status" aria-label="Filtrar por status"><option value="">Todos</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
       <select id="turma" aria-label="Filtrar por turma"><option value="">Todas turmas</option></select>
       <input id="age_min" type="number" placeholder="Idade mínima" aria-label="Idade mínima" style="width:110px" />
       <input id="age_max" type="number" placeholder="Idade máxima" aria-label="Idade máxima" style="width:110px" />
       <select id="order" aria-label="Ordenar"><option value="nome">Nome</option><option value="idade">Idade</option><option value="status">Status</option></select>
-      <button id="reload" class="btn">Filtrar</button>
+  <button id="reload" class="btn">Filtrar</button>
+  <button id="export-csv" class="btn" title="Exportar a página atual em CSV">Exportar CSV</button>
+  <button id="export-json" class="btn" title="Exportar a página atual em JSON">Exportar JSON</button>
     </div>
   </header>
   <main>
@@ -36,6 +38,18 @@
     <section>
       <h2>Lista de Alunos</h2>
       <ul id="lista"></ul>
+      <div class="pagination" style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <button id="page-prev" class="btn">Anterior</button>
+        <span id="page-indicator">Página 1</span>
+        <button id="page-next" class="btn">Próxima</button>
+        <label style="margin-left:8px">Por página:
+          <select id="page-size">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+      </div>
     </section>
   <div id="toast" role="status" aria-live="polite" style="position:fixed;right:16px;bottom:16px;z-index:1000"></div>
   </main>
@@ -94,17 +108,59 @@
         if(order === 'nome') data.sort((a,b)=> a.nome.localeCompare(b.nome))
         if(order === 'idade') data.sort((a,b)=> new Date(a.data_nascimento) - new Date(b.data_nascimento))
         if(order === 'status') data.sort((a,b)=> a.status.localeCompare(b.status))
-        const ul = document.getElementById('lista')
-        ul.innerHTML = ''
-        data.forEach(a=>{
-          const li = document.createElement('li')
-          const age = (new Date()).getFullYear() - (new Date(a.data_nascimento)).getFullYear()
-          li.textContent = `${a.id} - ${a.nome} (${a.status}) - ${age} anos`
-          ul.appendChild(li)
-        })
+        // armazenar dados e renderizar página
+        window.currentData = data
+        window.currentPage = window.currentPage || 1
+        window.pageSize = window.pageSize || 5
+        renderPage()
       }catch(e){
         showToast(e.message,'error')
       }
+    }
+
+    function renderPage(){
+      const ul = document.getElementById('lista')
+      ul.innerHTML = ''
+      const pageSize = window.pageSize || 5
+      const page = window.currentPage || 1
+      const start = (page-1)*pageSize
+      const end = start + pageSize
+      const pageItems = (window.currentData || []).slice(start,end)
+      pageItems.forEach(a=>{
+        const li = document.createElement('li')
+        const age = (new Date()).getFullYear() - (new Date(a.data_nascimento)).getFullYear()
+        li.textContent = `${a.id} - ${a.nome} (${a.status}) - ${age} anos`
+        ul.appendChild(li)
+      })
+      document.getElementById('page-indicator').textContent = `Página ${page} de ${Math.max(1, Math.ceil(((window.currentData||[]).length)/pageSize))}`
+    }
+
+    function exportCSV(){
+      const page = window.currentPage || 1
+      const pageSize = window.pageSize || 5
+      const start = (page-1)*pageSize
+      const end = start+pageSize
+      const rows = (window.currentData||[]).slice(start,end)
+      if(!rows.length){ showToast('Nada para exportar','error'); return }
+      const header = ['id','nome','data_nascimento','email','status','turma_id']
+      const csv = [header.join(',')].concat(rows.map(r=> header.map(h=> JSON.stringify(r[h] ?? '') ).join(','))).join('\n')
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'alunos_page.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast('CSV gerado')
+    }
+
+    function exportJSON(){
+      const page = window.currentPage || 1
+      const pageSize = window.pageSize || 5
+      const start = (page-1)*pageSize
+      const end = start+pageSize
+      const rows = (window.currentData||[]).slice(start,end)
+      if(!rows.length){ showToast('Nada para exportar','error'); return }
+      const blob = new Blob([JSON.stringify(rows,null,2)],{type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'alunos_page.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast('JSON gerado')
     }
 
     document.getElementById('reload').addEventListener('click', load)
@@ -141,11 +197,17 @@
       }catch(e){ console.warn('Não foi possível carregar turmas',e) }
     }
 
-    // restaurar ordenação previamente salva
-    document.getElementById('order').value = localStorage.getItem('order') || 'nome'
-    document.getElementById('reload').addEventListener('click', load)
-    loadTurmas()
-    load()
+  // restaurar ordenação previamente salva
+  document.getElementById('order').value = localStorage.getItem('order') || 'nome'
+  document.getElementById('reload').addEventListener('click', ()=>{ window.currentPage = 1; load() })
+  document.getElementById('export-csv').addEventListener('click', exportCSV)
+  document.getElementById('export-json').addEventListener('click', exportJSON)
+  // paginação controls
+  document.getElementById('page-prev').addEventListener('click', ()=>{ if(window.currentPage>1){ window.currentPage--; renderPage() } })
+  document.getElementById('page-next').addEventListener('click', ()=>{ const max = Math.max(1, Math.ceil(((window.currentData||[]).length)/(window.pageSize||5))); if(window.currentPage<max){ window.currentPage++; renderPage() } })
+  document.getElementById('page-size').addEventListener('change', (e)=>{ window.pageSize = parseInt(e.target.value)||5; window.currentPage=1; renderPage() })
+  loadTurmas()
+  load()
 
     load()
   </script>
