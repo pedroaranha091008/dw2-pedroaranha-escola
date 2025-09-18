@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
+  <a href="#main" class="skip-link">Pular para o conteúdo</a>
   <header>
     <h1>Lista de Alunos</h1>
     <input id="search" placeholder="Pesquisar por nome" />
@@ -30,19 +31,38 @@
       <h2>Lista de Alunos</h2>
       <ul id="lista"></ul>
     </section>
-    <div id="toast" role="status" aria-live="polite" style="position:fixed;right:16px;bottom:16px;z-index:1000"></div>
+  <div id="toast" role="status" aria-live="polite" style="position:fixed;right:16px;bottom:16px;z-index:1000"></div>
   </main>
   <script>
     function showToast(message, type='info'){
       const t = document.getElementById('toast')
       const el = document.createElement('div')
-      el.textContent = message
+      el.setAttribute('role','alert')
+      el.setAttribute('tabindex','0')
+      el.style.display = 'flex'
+      el.style.alignItems = 'center'
+      el.style.justifyContent = 'space-between'
+      el.style.minWidth = '220px'
       el.style.background = type==='error' ? '#ffdddd' : '#ddffdd'
       el.style.padding = '8px 12px'
       el.style.borderRadius = '6px'
       el.style.marginTop = '6px'
+      const span = document.createElement('span')
+      span.textContent = message
+      const btn = document.createElement('button')
+      btn.textContent = '×'
+      btn.setAttribute('aria-label','Fechar mensagem')
+      btn.style.marginLeft = '8px'
+      btn.style.background = 'transparent'
+      btn.style.border = 'none'
+      btn.style.cursor = 'pointer'
+      btn.addEventListener('click', ()=> el.remove())
+      el.appendChild(span)
+      el.appendChild(btn)
       t.appendChild(el)
-      setTimeout(()=> el.remove(), 4000)
+      // foco para leitura por leitores de tela
+      el.focus()
+      setTimeout(()=>{ if(document.body.contains(el)) el.remove() }, 6000)
     }
 
     async function load(){

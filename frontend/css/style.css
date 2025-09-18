@@ -19,3 +19,29 @@ li { background: white; margin-bottom: 8px; padding: 8px; border-radius: 4px; bo
 .controls { display:flex; gap:8px; align-items:center }
 .btn { background:#fff; border:1px solid rgba(0,0,0,0.08); padding:6px 10px; border-radius:4px; cursor:pointer }
 .btn-primary { background:#fff; color:#0b5fff; border-color:#0b5fff }
+
+.skip-link{
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-link:focus{
+  left: 8px;
+  top: 8px;
+  width: auto;
+  height: auto;
+  background: #000;
+  color: #fff;
+  padding: 8px 12px;
+  z-index: 10000;
+  border-radius: 4px;
+}
+
+/* foco visível para inputs e botões */
+input:focus, select:focus, button:focus {
+  outline: 3px solid #ffd54f;
+  outline-offset: 2px;
+}
