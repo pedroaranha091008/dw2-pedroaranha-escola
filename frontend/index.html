@@ -10,9 +10,15 @@
   <a href="#main" class="skip-link">Pular para o conteúdo</a>
   <header>
     <h1>Lista de Alunos</h1>
-    <input id="search" placeholder="Pesquisar por nome" />
-    <select id="status"><option value="">Todos</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
-    <button id="reload">Filtrar</button>
+    <div class="controls">
+      <input id="search" placeholder="Pesquisar por nome" aria-label="Pesquisar por nome" />
+      <select id="status" aria-label="Filtrar por status"><option value="">Todos</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+      <select id="turma" aria-label="Filtrar por turma"><option value="">Todas turmas</option></select>
+      <input id="age_min" type="number" placeholder="Idade mínima" aria-label="Idade mínima" style="width:110px" />
+      <input id="age_max" type="number" placeholder="Idade máxima" aria-label="Idade máxima" style="width:110px" />
+      <select id="order" aria-label="Ordenar"><option value="nome">Nome</option><option value="idade">Idade</option><option value="status">Status</option></select>
+      <button id="reload" class="btn">Filtrar</button>
+    </div>
   </header>
   <main>
     <section>
@@ -68,18 +74,32 @@
     async function load(){
       const search = document.getElementById('search').value
       const status = document.getElementById('status').value
+      const turma = document.getElementById('turma').value
+      const age_min = document.getElementById('age_min').value
+      const age_max = document.getElementById('age_max').value
+      const order = document.getElementById('order').value || localStorage.getItem('order') || 'nome'
+      localStorage.setItem('order', order)
       const q = new URLSearchParams()
       if(search) q.set('search', search)
       if(status) q.set('status', status)
+      if(turma) q.set('turma_id', turma)
+      if(age_min) q.set('age_min', age_min)
+      if(age_max) q.set('age_max', age_max)
+      q.set('order', order)
       try{
         const res = await fetch('/alunos?'+q.toString())
         if(!res.ok) throw new Error('Erro ao buscar alunos: '+res.status)
-        const data = await res.json()
+        let data = await res.json()
+        // ordenação cliente como fallback
+        if(order === 'nome') data.sort((a,b)=> a.nome.localeCompare(b.nome))
+        if(order === 'idade') data.sort((a,b)=> new Date(a.data_nascimento) - new Date(b.data_nascimento))
+        if(order === 'status') data.sort((a,b)=> a.status.localeCompare(b.status))
         const ul = document.getElementById('lista')
         ul.innerHTML = ''
         data.forEach(a=>{
           const li = document.createElement('li')
-          li.textContent = `${a.id} - ${a.nome} (${a.status})`
+          const age = (new Date()).getFullYear() - (new Date(a.data_nascimento)).getFullYear()
+          li.textContent = `${a.id} - ${a.nome} (${a.status}) - ${age} anos`
           ul.appendChild(li)
         })
       }catch(e){
@@ -89,7 +109,7 @@
 
     document.getElementById('reload').addEventListener('click', load)
 
-    document.getElementById('form-aluno').addEventListener('submit', async function(e){
+  document.getElementById('form-aluno').addEventListener('submit', async function(e){
       e.preventDefault()
       const nome = document.getElementById('nome').value.trim()
       const data_nascimento = document.getElementById('data_nascimento').value
@@ -110,6 +130,22 @@
         load()
       }catch(err){ showToast(err.message,'error') }
     })
+
+    // carregar turmas para filtro
+    async function loadTurmas(){
+      try{
+        const res = await fetch('/turmas')
+        const t = await res.json()
+        const sel = document.getElementById('turma')
+        t.forEach(x=>{ const o = document.createElement('option'); o.value = x.id; o.textContent = x.nome; sel.appendChild(o) })
+      }catch(e){ console.warn('Não foi possível carregar turmas',e) }
+    }
+
+    // restaurar ordenação previamente salva
+    document.getElementById('order').value = localStorage.getItem('order') || 'nome'
+    document.getElementById('reload').addEventListener('click', load)
+    loadTurmas()
+    load()
 
     load()
   </script>
