@@ -14,26 +14,83 @@
     <button id="reload">Filtrar</button>
   </header>
   <main>
-    <ul id="lista"></ul>
+    <section>
+      <h2>Adicionar aluno</h2>
+      <form id="form-aluno">
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" required>
+        <label for="data_nascimento">Data de nascimento</label>
+        <input id="data_nascimento" name="data_nascimento" type="date" required>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email">
+        <button class="btn btn-primary" type="submit">Criar</button>
+      </form>
+    </section>
+    <section>
+      <h2>Lista de Alunos</h2>
+      <ul id="lista"></ul>
+    </section>
+    <div id="toast" role="status" aria-live="polite" style="position:fixed;right:16px;bottom:16px;z-index:1000"></div>
   </main>
   <script>
+    function showToast(message, type='info'){
+      const t = document.getElementById('toast')
+      const el = document.createElement('div')
+      el.textContent = message
+      el.style.background = type==='error' ? '#ffdddd' : '#ddffdd'
+      el.style.padding = '8px 12px'
+      el.style.borderRadius = '6px'
+      el.style.marginTop = '6px'
+      t.appendChild(el)
+      setTimeout(()=> el.remove(), 4000)
+    }
+
     async function load(){
       const search = document.getElementById('search').value
       const status = document.getElementById('status').value
       const q = new URLSearchParams()
       if(search) q.set('search', search)
       if(status) q.set('status', status)
-      const res = await fetch('/api/alunos?'+q.toString())
-      const data = await res.json()
-      const ul = document.getElementById('lista')
-      ul.innerHTML = ''
-      data.forEach(a=>{
-        const li = document.createElement('li')
-        li.textContent = `${a.id} - ${a.nome} (${a.status})`
-        ul.appendChild(li)
-      })
+      try{
+        const res = await fetch('/alunos?'+q.toString())
+        if(!res.ok) throw new Error('Erro ao buscar alunos: '+res.status)
+        const data = await res.json()
+        const ul = document.getElementById('lista')
+        ul.innerHTML = ''
+        data.forEach(a=>{
+          const li = document.createElement('li')
+          li.textContent = `${a.id} - ${a.nome} (${a.status})`
+          ul.appendChild(li)
+        })
+      }catch(e){
+        showToast(e.message,'error')
+      }
     }
+
     document.getElementById('reload').addEventListener('click', load)
+
+    document.getElementById('form-aluno').addEventListener('submit', async function(e){
+      e.preventDefault()
+      const nome = document.getElementById('nome').value.trim()
+      const data_nascimento = document.getElementById('data_nascimento').value
+      const email = document.getElementById('email').value.trim()
+      if(!nome || !data_nascimento){ showToast('Nome e data de nascimento são obrigatórios','error'); return }
+      // validação faixa etária mínima 5 anos
+      const dob = new Date(data_nascimento)
+      const today = new Date()
+      let age = today.getFullYear() - dob.getFullYear()
+      if((today.getMonth()<dob.getMonth()) || (today.getMonth()===dob.getMonth() && today.getDate()<dob.getDate())) age--
+      if(age < 5){ showToast('Aluno deve ter pelo menos 5 anos','error'); return }
+      try{
+        const res = await fetch('/alunos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome,data_nascimento,email})})
+        if(!res.ok){ const err = await res.json(); throw new Error(err.detail || 'Erro ao criar aluno') }
+        const created = await res.json()
+        showToast('Aluno criado com sucesso','info')
+        document.getElementById('form-aluno').reset()
+        load()
+      }catch(err){ showToast(err.message,'error') }
+    })
+
     load()
   </script>
 </body>
