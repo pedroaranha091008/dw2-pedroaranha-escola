@@ -34,3 +34,25 @@ Content-Type: application/json
   "aluno_id": 1,
   "turma_id": 1
 }
+
+### List alunos - filtros avançados
+# busca por nome e status
+GET http://127.0.0.1:8000/alunos?search=ana&status=ativo
+
+# filtrar por turma e faixa etária (idade mínima e máxima)
+GET http://127.0.0.1:8000/alunos?turma_id=1&age_min=10&age_max=16
+
+# ordenação por nome ou data_nascimento (idade)
+GET http://127.0.0.1:8000/alunos?order=nome
+GET http://127.0.0.1:8000/alunos?order=data_nascimento
+
+### Paginação (limit / offset)
+# obter primeiro bloco (limit 5)
+GET http://127.0.0.1:8000/alunos?limit=5&offset=0
+
+# próximo bloco
+GET http://127.0.0.1:8000/alunos?limit=5&offset=5
+
+### Exemplos de export client-side
+# O backend fornece os dados; a exportação CSV/JSON é feita no frontend (veja frontend/index.html)
+
