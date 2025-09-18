@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from typing import Optional, List
-from sqlmodel import select
+from sqlmodel import select, text
 from datetime import date, datetime
 
 from .database import init_db, get_session
@@ -32,7 +32,16 @@ def create_turma(turma: Turma):
         return turma
 
 @app.get("/alunos", response_model=List[Aluno])
-def get_alunos(search: Optional[str] = None, turma_id: Optional[int] = None, status: Optional[str] = None):
+def get_alunos(
+    search: Optional[str] = None,
+    turma_id: Optional[int] = None,
+    status: Optional[str] = None,
+    age_min: Optional[int] = Query(None, alias="age_min"),
+    age_max: Optional[int] = Query(None, alias="age_max"),
+    order: Optional[str] = Query(None),
+    limit: Optional[int] = Query(0),
+    offset: Optional[int] = Query(0),
+):
     with get_session() as s:
         q = select(Aluno)
         if search:
@@ -41,7 +50,23 @@ def get_alunos(search: Optional[str] = None, turma_id: Optional[int] = None, sta
             q = q.where(Aluno.turma_id == turma_id)
         if status:
             q = q.where(Aluno.status == status)
-        return s.exec(q).all()
+        # filtro por idade (calcular usando data_nascimento)
+        today = date.today()
+        if age_min is not None:
+            # data de nascimento máxima permitida
+            max_dob = date(today.year - age_min, today.month, today.day)
+            q = q.where(Aluno.data_nascimento <= max_dob)
+        if age_max is not None:
+            min_dob = date(today.year - age_max - 1, today.month, today.day) + datetime.timedelta(days=1)
+            # simplificação: usar <=/>= aproximação
+            q = q.where(Aluno.data_nascimento >= min_dob)
+        # ordenação segura
+        if order in ("nome", "data_nascimento", "status"):
+            q = q.order_by(text(order))
+        results = s.exec(q)
+        if limit and limit > 0:
+            results = results.limit(limit).offset(offset)
+        return results.all()
 
 @app.post("/alunos", response_model=Aluno)
 def create_aluno(aluno: Aluno):
