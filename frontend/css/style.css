@@ -60,3 +60,16 @@ input:focus, select:focus, button:focus {
 :root[data-theme="dark"] header { background: var(--card); color: var(--text) }
 :root[data-theme="dark"] li { background: #0f1720; color: var(--text) }
 :root[data-theme="dark"] .btn { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.06) }
+
+/* toasts */
+#toast { display:flex; flex-direction:column; align-items:flex-end }
+.toast {
+  display:flex; align-items:center; gap:8px; justify-content:space-between;
+  min-width:220px; padding:10px 12px; border-radius:8px; margin-top:8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12); opacity:0; transform:translateY(8px);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.toast.show{ opacity:1; transform:translateY(0) }
+.toast.info{ background:#e6ffed; color:#042700 }
+.toast.error{ background:#ffe6e6; color:#4a0000 }
+.toast button{ background:transparent; border:none; font-size:18px; cursor:pointer }

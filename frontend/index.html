@@ -63,32 +63,24 @@
     function showToast(message, type='info'){
       const t = document.getElementById('toast')
       const el = document.createElement('div')
-      el.setAttribute('role','alert')
+      el.className = `toast ${type}`
+      el.setAttribute('role','status')
+      el.setAttribute('aria-live','polite')
       el.setAttribute('tabindex','0')
-      el.style.display = 'flex'
-      el.style.alignItems = 'center'
-      el.style.justifyContent = 'space-between'
-      el.style.minWidth = '220px'
-      el.style.background = type==='error' ? '#ffdddd' : '#ddffdd'
-      el.style.padding = '8px 12px'
-      el.style.borderRadius = '6px'
-      el.style.marginTop = '6px'
       const span = document.createElement('span')
       span.textContent = message
       const btn = document.createElement('button')
       btn.textContent = '×'
       btn.setAttribute('aria-label','Fechar mensagem')
-      btn.style.marginLeft = '8px'
-      btn.style.background = 'transparent'
-      btn.style.border = 'none'
-      btn.style.cursor = 'pointer'
-      btn.addEventListener('click', ()=> el.remove())
+      btn.addEventListener('click', ()=>{ el.classList.remove('show'); setTimeout(()=> el.remove(),250) })
       el.appendChild(span)
       el.appendChild(btn)
       t.appendChild(el)
-      // foco para leitura por leitores de tela
+      // animar
+      requestAnimationFrame(()=> el.classList.add('show'))
+      // foco para leitores de tela
       el.focus()
-      setTimeout(()=>{ if(document.body.contains(el)) el.remove() }, 6000)
+      setTimeout(()=>{ if(document.body.contains(el)){ el.classList.remove('show'); setTimeout(()=> el.remove(),250) } }, 6000)
     }
 
     async function load(){
