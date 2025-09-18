@@ -45,3 +45,18 @@ input:focus, select:focus, button:focus {
   outline: 3px solid #ffd54f;
   outline-offset: 2px;
 }
+
+/* dark theme */
+:root[data-theme="dark"] {
+  --bg: #0b0f14;
+  --card: #0f1720;
+  --text: #e6eef6;
+  --primary: #5aa3ff;
+}
+@media (prefers-color-scheme: dark){
+  /* keep default theme if user prefers dark but explicit theme may override */
+}
+:root[data-theme="dark"] body { background: var(--bg); color: var(--text) }
+:root[data-theme="dark"] header { background: var(--card); color: var(--text) }
+:root[data-theme="dark"] li { background: #0f1720; color: var(--text) }
+:root[data-theme="dark"] .btn { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.06) }
